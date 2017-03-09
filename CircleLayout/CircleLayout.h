@@ -37,8 +37,4 @@ typedef NS_ENUM(NSUInteger, RotateDirection) {
 //结束角度
 @property (nonatomic, assign) CGFloat endAngle;
 
-//滚动方向
-//@property (nonatomic, assign) RotateDirection rotateDirection;
-
-
 @end

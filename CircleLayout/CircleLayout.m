@@ -8,6 +8,12 @@
 
 #import "CircleLayout.h"
 
+@interface CircleLayout ()
+
+@property (strong, nonatomic) NSMutableArray *rectAttributes;
+
+@end
+
 @implementation CircleLayout
 
 - (instancetype)init {
@@ -20,7 +26,7 @@
 
 - (void)defaultSetup {
     self.radius = 200.0;
-    self.angleBetweenItem = M_PI/6;
+    self.angleBetweenItem = M_PI/5;
     self.itemSize = CGSizeMake(50, 50);
     self.startAngle = 0;
     self.endAngle = M_PI;
@@ -40,12 +46,15 @@
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
     
     UICollectionViewLayoutAttributes *attribute = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
-    CGFloat centerX = self.collectionView.contentOffset.x + 0.5*self.collectionView.bounds.size.width;
-    CGFloat centerY = self.collectionView.contentOffset.y + 0.5*self.collectionView.bounds.size.height;
-    CGFloat angle = -M_PI_2-indexPath.item*self.angleBetweenItem;
-    CGFloat x = centerX + self.radius*cos(-angle-M_PI_2);
-    CGFloat y = centerY - self.radius*sin(-angle);
+    CGFloat centerX = self.collectionView.contentOffset.x + 0.5*CGRectGetWidth(self.collectionView.bounds);
+    CGFloat centerY = CGRectGetMidY(self.collectionView.frame);
+    
+    CGFloat startAngle = self.collectionView.contentOffset.x/[self collectionViewContentSize].width*([self.collectionView numberOfItemsInSection:0]-1)*self.angleBetweenItem;
+    CGFloat angle = startAngle+indexPath.item*self.angleBetweenItem;
+    CGFloat x = centerX + self.radius*cos(angle+M_PI);
+    CGFloat y = centerY - self.radius*sin(angle);
     attribute.center = CGPointMake(x, y);
+    attribute.size = self.itemSize;
     attribute.transform = CGAffineTransformMakeRotation(angle);
     
     return attribute;
@@ -53,14 +62,38 @@
 
 - (NSArray<UICollectionViewLayoutAttributes *> *)layoutAttributesForElementsInRect:(CGRect)rect {
     
-    
-    return [super layoutAttributesForElementsInRect:rect];
+    return [self attributesInRect:rect];
 }
 
-- (CGPoint)targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset withScrollingVelocity:(CGPoint)velocity {
+- (NSArray *)attributesInRect:(CGRect)rect {
     
+    CGFloat spacing = self.radius*sin(self.angleBetweenItem);
+    NSInteger preIndex = rect.origin.x/spacing;
+    preIndex = preIndex<0 ? 0 : preIndex;
     
-    return CGPointZero;
+    NSInteger latIndex = CGRectGetMaxX(rect)/spacing;
+    NSInteger itemCount = [self.collectionView numberOfItemsInSection:0];
+    NSInteger minCount = MIN(itemCount, 2*M_PI/self.angleBetweenItem);
+    latIndex = latIndex>=minCount ? minCount-1 : latIndex;
+    
+    [self.rectAttributes removeAllObjects];
+    for (NSInteger i=0; i<=latIndex; i++) {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:0];
+        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForItemAtIndexPath:indexPath];
+        if (CGRectIntersectsRect(rect, attribute.frame)) {
+            [self.rectAttributes addObject:attribute];
+        }
+    }
+    
+    return self.rectAttributes;
+}
+
+- (NSMutableArray *)rectAttributes {
+    
+    if (!_rectAttributes) {
+        _rectAttributes = [NSMutableArray array];
+    }
+    return _rectAttributes;
 }
 
 @end
