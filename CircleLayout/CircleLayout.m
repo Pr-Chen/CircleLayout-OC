@@ -30,6 +30,8 @@
     self.itemSize = CGSizeMake(50, 50);
     self.startAngle = 0;
     self.endAngle = M_PI;
+    self.centrePosition = CGPointMake(0.5, 0.5);
+    self.sortDirection = SortDirectionCounterClockwise;
 }
 
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
@@ -39,23 +41,35 @@
 - (CGSize)collectionViewContentSize {
     
     //需要根据可见角度来设置ContentSize, 当可见角度在竖直方向时ContentSize需要设置竖直方向的尺寸
-    CGFloat width = [self.collectionView numberOfItemsInSection:0] *self.radius*sin(self.angleBetweenItem);
+    CGFloat width = [self.collectionView numberOfItemsInSection:0] * self.radius * sin(self.angleBetweenItem);
     return CGSizeMake(width, self.collectionView.bounds.size.height);
 }
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
     
     UICollectionViewLayoutAttributes *attribute = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
-    CGFloat centerX = self.collectionView.contentOffset.x + 0.5*CGRectGetWidth(self.collectionView.bounds);
-    CGFloat centerY = CGRectGetMidY(self.collectionView.frame);
+    CGFloat centreX = self.collectionView.contentOffset.x + self.centrePosition.x*CGRectGetWidth(self.collectionView.bounds);
+    CGFloat centreY = self.collectionView.frame.origin.y + self.centrePosition.y*self.collectionView.bounds.size.height;
     
-    CGFloat startAngle = self.collectionView.contentOffset.x/[self collectionViewContentSize].width*([self.collectionView numberOfItemsInSection:0]-1)*self.angleBetweenItem;
-    CGFloat angle = startAngle+indexPath.item*self.angleBetweenItem;
-    CGFloat x = centerX + self.radius*cos(angle+M_PI);
-    CGFloat y = centerY - self.radius*sin(angle);
+    CGFloat contentWidth = [self collectionViewContentSize].width;
+    CGFloat itemCount = [self.collectionView numberOfItemsInSection:0];
+    
+    CGFloat firstItemAngle = 0.0;
+    if (self.sortDirection == SortDirectionClockwise) {
+        firstItemAngle = self.endAngle - self.collectionView.contentOffset.x/contentWidth*(itemCount-1)*self.angleBetweenItem;
+    }
+    else {
+        firstItemAngle = self.startAngle + self.collectionView.contentOffset.x/contentWidth*(itemCount-1)*self.angleBetweenItem;
+    }
+    CGFloat angle = firstItemAngle+indexPath.item*self.angleBetweenItem;
+    
+    CGFloat offsetAngle = self.sortDirection==SortDirectionClockwise ? M_PI : 0;
+    CGFloat x = centreX + self.radius*cos(angle-offsetAngle);
+    CGFloat y = centreY - self.radius*sin(angle);
+    
     attribute.center = CGPointMake(x, y);
     attribute.size = self.itemSize;
-    attribute.transform = CGAffineTransformMakeRotation(angle);
+    attribute.transform = CGAffineTransformMakeRotation(-angle+self.startAngle);
     
     return attribute;
 }
@@ -68,21 +82,19 @@
 - (NSArray *)attributesInRect:(CGRect)rect {
     
     CGFloat spacing = self.radius*sin(self.angleBetweenItem);
-    NSInteger preIndex = rect.origin.x/spacing;
-    preIndex = preIndex<0 ? 0 : preIndex;
+    NSInteger firstIndex = rect.origin.x/spacing;
+    firstIndex = firstIndex<0 ? 0 : firstIndex;
     
-    NSInteger latIndex = CGRectGetMaxX(rect)/spacing;
+    NSInteger lastIndex = CGRectGetMaxX(rect)/spacing;
     NSInteger itemCount = [self.collectionView numberOfItemsInSection:0];
-    NSInteger minCount = MIN(itemCount, 2*M_PI/self.angleBetweenItem);
-    latIndex = latIndex>=minCount ? minCount-1 : latIndex;
+    NSInteger minCount = MIN(itemCount, ceilf(2*M_PI/self.angleBetweenItem));
+    lastIndex = lastIndex>=minCount ? firstIndex+minCount-1 : lastIndex;
     
     [self.rectAttributes removeAllObjects];
-    for (NSInteger i=0; i<=latIndex; i++) {
+    for (NSInteger i=firstIndex; i<=lastIndex; i++) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:0];
         UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForItemAtIndexPath:indexPath];
-        if (CGRectIntersectsRect(rect, attribute.frame)) {
-            [self.rectAttributes addObject:attribute];
-        }
+        [self.rectAttributes addObject:attribute];
     }
     
     return self.rectAttributes;

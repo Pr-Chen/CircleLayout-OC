@@ -19,7 +19,7 @@ typedef NS_ENUM(NSUInteger, SortDirection) {
 //转动半径
 @property (nonatomic, assign) CGFloat radius;
 
-//圆心位置
+//圆心位置(取值为相对collectionView的size，如（0.5，0.5）表示中心点)
 @property (nonatomic, assign) CGPoint centrePosition;
 
 //cell夹角

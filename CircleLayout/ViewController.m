@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "CircleLayout.h"
+#import "CollectionViewCell.h"
 
 @interface ViewController () <UICollectionViewDataSource, UICollectionViewDelegate>
 
@@ -28,7 +29,7 @@
     self.collectionView.showsHorizontalScrollIndicator = NO;
     self.collectionView.showsVerticalScrollIndicator = NO;
     self.collectionView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1];
-    [self.collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"CellID"];
+    [self.collectionView registerNib:[CollectionViewCell nib] forCellWithReuseIdentifier:[CollectionViewCell cellId]];
     [self.view addSubview:self.collectionView];
 }
 
@@ -38,13 +39,12 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return 20;
+    return 30;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellID" forIndexPath:indexPath];
-    cell.backgroundColor = [UIColor redColor];
-    cell.layer.cornerRadius = 25;
+    CollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:[CollectionViewCell cellId] forIndexPath:indexPath];
+    cell.title = [NSString stringWithFormat:@"%ld", indexPath.item];
     return cell;
 }
 
