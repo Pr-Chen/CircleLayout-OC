@@ -8,9 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-typedef NS_ENUM(NSUInteger, RotateDirection) {
-    RotateDirectionClockwise,
-    RotateDirectionCounterClockwise,
+typedef NS_ENUM(NSUInteger, SortDirection) {
+    SortDirectionClockwise,
+    SortDirectionCounterClockwise,
 };
 
 
@@ -20,7 +20,7 @@ typedef NS_ENUM(NSUInteger, RotateDirection) {
 @property (nonatomic, assign) CGFloat radius;
 
 //圆心位置
-//@property (nonatomic, assign) CGPoint centrePosition;
+@property (nonatomic, assign) CGPoint centrePosition;
 
 //cell夹角
 @property (nonatomic, assign) CGFloat angleBetweenItem;
@@ -36,5 +36,8 @@ typedef NS_ENUM(NSUInteger, RotateDirection) {
 
 //结束角度
 @property (nonatomic, assign) CGFloat endAngle;
+
+//排列方向
+@property (nonatomic, assign) SortDirection sortDirection;
 
 @end
